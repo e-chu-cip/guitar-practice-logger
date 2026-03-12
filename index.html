@@ -2,62 +2,185 @@
 <html>
   <head>
     <base target="_top" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta charset="utf-8" />
+
+    <!-- iPhone Safari: keep this on ONE LINE (Apps Script HTMLService is picky) -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, shrink-to-fit=no" />
+
+    <!-- Makes Home Screen launch feel more “app-like” -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+
     <style>
-      body { font-family: Arial, sans-serif; padding: 16px; max-width: 760px; margin: 0 auto; }
-      .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
-      textarea { width: 100%; height: 140px; font-size: 16px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
-      button { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; background: #f7f7f7; }
-      button.primary { background: #2563eb; color: white; border: none; }
+      /* Mobile-first, iPhone-friendly UI */
+      html { -webkit-text-size-adjust: 100%; }
+
+      body {
+        min-width: 100vw; /* IMPORTANT: vw (not vs) */
+        margin: 0;
+        padding: 12px;
+        background: #ffffff;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Arial, sans-serif;
+        font-size: 20px;
+        line-height: 1.35;
+        -webkit-tap-highlight-color: transparent;
+      }
+
+      /* Constrain width a bit so it feels like an “app card” on large screens */
+      .container {
+        max-width: 520px;
+        margin: 0 auto;
+      }
+
+      h2 {
+        margin: 10px 0 12px;
+        font-size: 26px;
+        font-weight: 800;
+      }
+
+      .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        padding: 14px;
+        background: #fff;
+      }
+
+      label strong { font-size: 18px; }
+
+      /* Dictation box: big font, not too tall */
+      textarea {
+        width: 100%;
+        height: 82px;
+        font-size: 22px;
+        padding: 12px;
+        border-radius: 14px;
+        border: 1px solid #cbd5e1;
+        outline: none;
+        box-sizing: border-box;
+        resize: none;
+      }
+      textarea:focus { border-color: #2563eb; }
+
+      /* Big, thumb-friendly buttons (stacked on phone) */
+      .btnRow {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 10px;
+        margin-top: 12px;
+      }
+
+      button {
+        font-size: 22px;
+        padding: 16px 18px;
+        border-radius: 14px;
+        border: 1px solid #cbd5e1;
+        background: #f8fafc;
+        width: 100%;
+        touch-action: manipulation;
+      }
+
+      button.primary {
+        background: #2563eb;
+        color: #ffffff;
+        border: none;
+      }
+
       button:disabled { opacity: 0.5; }
-      .small { color: #666; font-size: 13px; }
-      .status { margin-top: 10px; font-weight: 700; }
+
+      .small {
+        color: #475569;
+        font-size: 14px;
+        margin-top: 10px;
+      }
+
+      .status {
+        margin-top: 10px;
+        font-weight: 800;
+        font-size: 18px;
+      }
       .ok { color: #0a7a2f; }
       .err { color: #b00020; }
-      .result { margin-top: 10px; padding: 10px; background: #fafafa; border: 1px dashed #ccc; border-radius: 10px; white-space: pre-wrap; }
-      code { background: #f2f2f2; padding: 2px 6px; border-radius: 6px; }
+
+      .result {
+        margin-top: 10px;
+        padding: 12px;
+        background: #fafafa;
+        border: 1px dashed #cbd5e1;
+        border-radius: 12px;
+        white-space: pre-wrap;
+        font-size: 16px;
+      }
+
+      code { background: #f1f5f9; padding: 2px 6px; border-radius: 6px; }
+
+      /* iPhone portrait “boost”: make everything slightly bigger */
+      @media (max-width: 430px) {
+        body { font-size: 22px; }
+        h2 { font-size: 28px; }
+        textarea { font-size: 23px; }
+        button { font-size: 23px; }
+      }
+
+      /* On wider screens, allow buttons to sit side-by-side (optional) */
+      @media (min-width: 700px) {
+        .btnRow { grid-template-columns: 1fr 1fr; }
+      }
     </style>
   </head>
+
   <body>
-    <h2>🎸 Guitar Practice Logger</h2>
+    <div class="container">
+      <h2>🎸 Guitar Practice Logger </h2>
 
-    <div class="card">
-      <label><strong>Dictate your practice log (single field)</strong></label>
-      <textarea id="transcript" placeholder="Example: Today I played 20 minutes working on scales and alternate picking. Notes are felt smoother at 80 bpm."></textarea>
+      <div class="card">
+        <label><strong>Dictate your practice log (single field)</strong></label>
 
-      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
-        <button id="submitBtn" class="primary" onclick="submitTranscript()">✅ Submit</button>
-        <button onclick="clearAll()">🧹 Clear</button>
+        <textarea
+          id="transcript"
+          placeholder="Example: Today I played 20 minutes working on scales and alternate picking. Notes are felt smoother at 80 bpm."
+        ></textarea>
+
+        <div class="btnRow">
+          <button id="submitBtn" class="primary" onclick="submitTranscript()">✅ Submit</button>
+          <button onclick="clearAll()">🧹 Clear</button>
+        </div>
+
+        <div class="small">
+          <strong>Tip:</strong> On iPhone Safari, tap inside the box and use the keyboard mic 🎙️ to dictate.<br />
+          If you include <code>Notes are ...</code> (or <code>Notes:</code>), anything after that is treated as Notes.
+        </div>
+
+        <div id="status" class="status"></div>
+        <div id="result" class="result" style="display:none;"></div>
       </div>
-
-      <div class="small" style="margin-top:10px;">
-        <strong>Tip:</strong> On iPhone Safari, tap inside the box and use the keyboard mic 🎙️ to dictate.<br/>
-        If you include <code>Notes are ...</code> (or <code>Notes:</code>), anything after that is treated as Notes.
-      </div>
-
-      <div id="status" class="status"></div>
-      <div id="result" class="result" style="display:none;"></div>
     </div>
 
     <script>
       function setStatus(msg, kind) {
-        const el = document.getElementById("status");
+        var el = document.getElementById("status");
         el.textContent = msg;
         el.className = "status " + (kind || "");
       }
 
       function showResult(parsed) {
-        const el = document.getElementById("result");
+        var el = document.getElementById("result");
         el.style.display = "block";
+
+        var conf = parsed && parsed.parse_confidence ? parsed.parse_confidence : "(blank)";
+        var dur = parsed && parsed.duration_min !== "" ? parsed.duration_min : "(blank)";
+        var focus = parsed && parsed.focus ? parsed.focus : "(blank)";
+        var notes = parsed && parsed.notes ? parsed.notes : "(blank)";
+
         el.textContent =
           "Extracted fields:\n" +
-          "• Duration_min: " + (parsed.duration_min === "" ? "(blank)" : parsed.duration_min) + "\n" +
-          "• Focus: " + (parsed.focus ? parsed.focus : "(blank)") + "\n" +
-          "• Notes: " + (parsed.notes ? parsed.notes : "(blank)");
+          "• Duration_min: " + dur + "\n" +
+          "• Focus: " + focus + "\n" +
+          "• Notes: " + notes + "\n" +
+          "• Parse_Confidence: " + conf;
       }
 
       function submitTranscript() {
-        const text = document.getElementById("transcript").value.trim();
+        var text = document.getElementById("transcript").value.trim();
         if (!text) {
           setStatus("Please dictate or type something first.", "err");
           return;
@@ -67,13 +190,14 @@
         document.getElementById("submitBtn").disabled = true;
 
         google.script.run
-          .withSuccessHandler((parsed) => {
+          .withSuccessHandler(function(parsed) {
             setStatus("✅ Logged to Google Sheet!", "ok");
             showResult(parsed || {});
             document.getElementById("submitBtn").disabled = false;
           })
-          .withFailureHandler((err) => {
-            setStatus("❌ Submit failed: " + (err && err.message ? err.message : err), "err");
+          .withFailureHandler(function(err) {
+            var msg = (err && err.message) ? err.message : String(err);
+            setStatus("❌ Submit failed: " + msg, "err");
             document.getElementById("submitBtn").disabled = false;
           })
           .logFromTranscript(text);
