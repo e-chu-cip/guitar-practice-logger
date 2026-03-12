@@ -1,0 +1,11 @@
+# clasp linkage file (do NOT commit to public repos)
+.clasp.json
+
+# macOS
+.DS_Store
+
+# Node (not required, but common)
+node_modules/
+
+# Editor settings (optional)
+.vscode/

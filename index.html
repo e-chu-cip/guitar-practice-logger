@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_top" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body { font-family: Arial, sans-serif; padding: 16px; max-width: 760px; margin: 0 auto; }
+      .card { border: 1px solid #ddd; border-radius: 12px; padding: 16px; margin-bottom: 14px; }
+      textarea { width: 100%; height: 140px; font-size: 16px; padding: 10px; border-radius: 10px; border: 1px solid #ccc; }
+      button { padding: 10px 14px; border-radius: 10px; border: 1px solid #ccc; background: #f7f7f7; }
+      button.primary { background: #2563eb; color: white; border: none; }
+      button:disabled { opacity: 0.5; }
+      .small { color: #666; font-size: 13px; }
+      .status { margin-top: 10px; font-weight: 700; }
+      .ok { color: #0a7a2f; }
+      .err { color: #b00020; }
+      .result { margin-top: 10px; padding: 10px; background: #fafafa; border: 1px dashed #ccc; border-radius: 10px; white-space: pre-wrap; }
+      code { background: #f2f2f2; padding: 2px 6px; border-radius: 6px; }
+    </style>
+  </head>
+  <body>
+    <h2>🎸 Guitar Practice Logger</h2>
+
+    <div class="card">
+      <label><strong>Dictate your practice log (single field)</strong></label>
+      <textarea id="transcript" placeholder="Example: Today I played 20 minutes working on scales and alternate picking. Notes are felt smoother at 80 bpm."></textarea>
+
+      <div style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;">
+        <button id="submitBtn" class="primary" onclick="submitTranscript()">✅ Submit</button>
+        <button onclick="clearAll()">🧹 Clear</button>
+      </div>
+
+      <div class="small" style="margin-top:10px;">
+        <strong>Tip:</strong> On iPhone Safari, tap inside the box and use the keyboard mic 🎙️ to dictate.<br/>
+        If you include <code>Notes are ...</code> (or <code>Notes:</code>), anything after that is treated as Notes.
+      </div>
+
+      <div id="status" class="status"></div>
+      <div id="result" class="result" style="display:none;"></div>
+    </div>
+
+    <script>
+      function setStatus(msg, kind) {
+        const el = document.getElementById("status");
+        el.textContent = msg;
+        el.className = "status " + (kind || "");
+      }
+
+      function showResult(parsed) {
+        const el = document.getElementById("result");
+        el.style.display = "block";
+        el.textContent =
+          "Extracted fields:\n" +
+          "• Duration_min: " + (parsed.duration_min === "" ? "(blank)" : parsed.duration_min) + "\n" +
+          "• Focus: " + (parsed.focus ? parsed.focus : "(blank)") + "\n" +
+          "• Notes: " + (parsed.notes ? parsed.notes : "(blank)");
+      }
+
+      function submitTranscript() {
+        const text = document.getElementById("transcript").value.trim();
+        if (!text) {
+          setStatus("Please dictate or type something first.", "err");
+          return;
+        }
+
+        setStatus("Submitting…", "");
+        document.getElementById("submitBtn").disabled = true;
+
+        google.script.run
+          .withSuccessHandler((parsed) => {
+            setStatus("✅ Logged to Google Sheet!", "ok");
+            showResult(parsed || {});
+            document.getElementById("submitBtn").disabled = false;
+          })
+          .withFailureHandler((err) => {
+            setStatus("❌ Submit failed: " + (err && err.message ? err.message : err), "err");
+            document.getElementById("submitBtn").disabled = false;
+          })
+          .logFromTranscript(text);
+      }
+
+      function clearAll() {
+        document.getElementById("transcript").value = "";
+        document.getElementById("result").style.display = "none";
+        setStatus("", "");
+      }
+    </script>
+  </body>
+</html>
